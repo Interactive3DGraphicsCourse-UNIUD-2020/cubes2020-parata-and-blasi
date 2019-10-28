@@ -32,9 +32,11 @@
 		
 		//CUBE VARIABLE
 		var geometry;
-		var material;
-		var cube;
-		var edges;
+		var mapMaterial;
+		var playerMaterial;
+		var cubeMap;
+		var cubePlayer;
+		var edge;
 		var line;
 		
 		
@@ -84,7 +86,16 @@
 			CreateMatrix();				//Crea la matrice assegnando false alle caselle vuote 			
 			CreateMap();				//Crea la mappa in base alla matrice creata sopra
 			
-			//Coordinates.drawAllAxes();				Per mostrare le coordinate nella scena
+			cubePlayer.position.set(0,1,0);
+
+			
+
+
+			DrawPlayer();
+			scene.add( cubePlayer );
+
+		
+			//Coordinates.drawAllAxes();				//Per mostrare le coordinate nella scena
 			
 			controls = new THREE.OrbitControls( camera );
 			controls.addEventListener( 'change', Render );
@@ -128,15 +139,20 @@
 		//INIZIALIZZA LE CARATTERISTICHE DELLA CAMERA
 		function InizializeCamera(){
 			camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-			camera.position.set(0,5,0);
+			camera.position.set(0,6,10);
 			camera.lookAt( new THREE.Vector3(0,0,0));
 		}
 
 		//INIZIALIZZA LE CARATTERISTICHE DEI CUBI
 		function InitializeCube(){			
 			geometry = new THREE.BoxGeometry(1,1,1);
-			material = new THREE.MeshLambertMaterial( { color: 0xaaaaaa} );
-			//creazione dei bordi delle facce
+
+			mapMaterial = new THREE.MeshLambertMaterial( { color: 0xf5ad4b} );
+			playerMaterial = new THREE.MeshLambertMaterial( { color: 0xff0000});
+
+			cubeMap = new THREE.Mesh( geometry, mapMaterial );
+			cubePlayer = new THREE.Mesh( geometry, playerMaterial );
+
 			edges = new THREE.EdgesGeometry(geometry);
 			line = new THREE.LineSegments(
 					edges, 
@@ -145,15 +161,29 @@
 					})
 			);
 
-			cube = new THREE.Mesh( geometry, material );
-			cube.reciveShadow = true;
-			cube.castShadow = true;
-			//assegnazione dei bordi ai cubi
-			cube.add(line);
 			
+			DrawMapCubes();
+			
+
+			
+
+		}
+
+		function DrawPlayer(){
+
+			cubePlayer.reciveShadow = true;
+			cubePlayer.castShadow = true;
+			cubePlayer.add(line);
+		}
+
+		function DrawMapCubes(){
+			cubeMap.reciveShadow = true;
+			cubeMap.castShadow = true;
+			cubeMap.add(line);
 		}
 
 		
+
 
 		//CREA GLI STATS DELLA SCENA
 		function CreateStats(){
@@ -165,6 +195,7 @@
 
 		//CREA LA LUCE
 		function CreateLight(){
+			
 			light       = new THREE.DirectionalLight(0xffaa00, 2.1);
 			light.position.set(1,50,30);
 			scene.add(light);
@@ -201,13 +232,16 @@
 				for(var x=0; x<6; x++){
 					if(matrix[z][x] == true){
 						InitializeCube();
-						scene.add(cube);
-						cube.position.set(x,0,z);
+						
+						scene.add(cubeMap);
+						cubeMap.position.set(x,0,z);
 					}
 
 				}
 			}
 		}
+		
+		
 
 
 		Start();
