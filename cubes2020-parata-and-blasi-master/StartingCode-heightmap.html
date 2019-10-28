@@ -34,6 +34,8 @@
 		var geometry;
 		var material;
 		var cube;
+		var edges;
+		var line;
 		
 		
 
@@ -82,11 +84,6 @@
 			CreateMatrix();				//Crea la matrice assegnando false alle caselle vuote 			
 			CreateMap();				//Crea la mappa in base alla matrice creata sopra
 			
-			//cube.position.set(0,0,0);
-
-			//scene.add( cube );
-
-		
 			//Coordinates.drawAllAxes();				Per mostrare le coordinate nella scena
 			
 			controls = new THREE.OrbitControls( camera );
@@ -139,8 +136,24 @@
 		function InitializeCube(){			
 			geometry = new THREE.BoxGeometry(1,1,1);
 			material = new THREE.MeshLambertMaterial( { color: 0xaaaaaa} );
+			//creazione dei bordi delle facce
+			edges = new THREE.EdgesGeometry(geometry);
+			line = new THREE.LineSegments(
+					edges, 
+					new THREE.LineBasicMaterial({
+						color: 0x000000
+					})
+			);
+
 			cube = new THREE.Mesh( geometry, material );
+			cube.reciveShadow = true;
+			cube.castShadow = true;
+			//assegnazione dei bordi ai cubi
+			cube.add(line);
+			
 		}
+
+		
 
 		//CREA GLI STATS DELLA SCENA
 		function CreateStats(){
@@ -187,7 +200,7 @@
 			for(var z=0; z<6; z++){
 				for(var x=0; x<6; x++){
 					if(matrix[z][x] == true){
-						cube = new THREE.Mesh( geometry, material );
+						InitializeCube();
 						scene.add(cube);
 						cube.position.set(x,0,z);
 					}
@@ -195,8 +208,6 @@
 				}
 			}
 		}
-		
-		
 
 
 		Start();
