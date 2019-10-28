@@ -209,11 +209,19 @@
 		}
 
 		//CREA LA LUCE
-		function CreateLight() {
+		function CreateLight(){
 
-			light = new THREE.DirectionalLight(0xffaa00, 2.1);
-			light.position.set(1, 50, 30);
-			scene.add(light);
+			var spotLight = new THREE.SpotLight( {color: 0xffffff} );
+
+			var targetObject = new THREE.Object3D();
+			scene.add(targetObject);
+			spotLight.target = targetObject;
+
+			spotLight.position.set( 0, 3, 1 );
+			spotLight.angle = Math.PI / 6;
+
+			scene.add( spotLight );
+
 		}
 
 		//CREA LA MATRICE
