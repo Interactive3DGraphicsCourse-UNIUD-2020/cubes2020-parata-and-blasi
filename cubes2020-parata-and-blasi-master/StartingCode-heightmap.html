@@ -36,7 +36,11 @@
 		var cubePlayer;
 		var edge;
 		var line;
+		var cubePlayerPosition;
 
+		//CUBE LIGHT
+		var spotLight;
+	
 
 
 
@@ -91,6 +95,16 @@
 			//Attivazione ascolto comandi per gli spostamenti del cubo
 			document.addEventListener("keydown", onDocumentKeyDown, false);
 
+			//Responsive window
+			window.addEventListener("resize", onWindowResize, false);
+
+			function onWindowResize(){
+				camera.aspect = window.innerWidth/window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+			
+
 
 			cubePlayer.position.set(0, 1, 0);
 
@@ -130,8 +144,8 @@
 		}
 
 		function Render() {
-			
-			
+
+
 
 			renderer.render(scene, camera);
 		}
@@ -209,18 +223,31 @@
 		}
 
 		//CREA LA LUCE
-		function CreateLight(){
+		function CreateLight() {
+			var pivot = new THREE.Object3D();
+			scene.add(pivot);
+			
 
-			var spotLight = new THREE.SpotLight( {color: 0xffffff} );
+			spotLight = new THREE.PointLight( 0xffffff, 1, 5 );
 
-			var targetObject = new THREE.Object3D();
-			scene.add(targetObject);
-			spotLight.target = targetObject;
+			
 
-			spotLight.position.set( 0, 3, 1 );
-			spotLight.angle = Math.PI / 6;
+			cubePlayerPosition = new THREE.Vector3();
+			cubePlayer.localToWorld(cubePlayerPosition);
+			pivot.worldToLocal(cubePlayerPosition);
+			cubePlayerPosition.sub(pivot.position);
+			cubePlayerPosition.add(new THREE.Vector3(-0.7,2,-0.7));
+			pivot.position.add(cubePlayerPosition);
 
-			scene.add( spotLight );
+			
+			pivot.add(spotLight);
+			
+			console.log(pivot.position);
+
+			//spotLight.position.set(0, 3, 1);
+			
+
+			scene.add(pivot);
 
 		}
 
@@ -247,6 +274,7 @@
 			matrix[4][3] = false;
 			matrix[5][3] = false;
 			matrix[5][5] = false;
+			
 		}
 
 		//CREA LA MAPPA IN BASE ALLA MATRICE 
@@ -265,30 +293,57 @@
 		}
 
 		function onDocumentKeyDown(event) {
-				var keyCode = event.code;
-				if (keyCode == 'KeyW') {
-					cubePlayer.translateZ(1);
-					
-				} else if (keyCode == 'KeyS' ) {
-		
-					cubePlayer.translateZ(-1);
-				} else if (keyCode =='KeyA' ) {
-				
-					cubePlayer.translateX(1);
-				} else if (keyCode == 'KeyD') {
-			
-					cubePlayer.translateX(-1);
-				} else if (keyCode == Space) {
-					cubePlayer.position.set(2, 1, 2);
-				}
-				Render();
+			var keyCode = event.code;
+			if (keyCode == 'KeyW') {
+				moveCube("avanti")
+			} else if (keyCode == 'KeyS') {
+				moveCube("back")
+			} else if (keyCode == 'KeyA') {
+				moveCube("left")
+			} else if (keyCode == 'KeyD') {
+				moveCube("right")
+			} else if (keyCode == 'Space') {
+				cubePlayer.position.set(2, 1, 2);
 			}
-			
-		
+			Render();
+			}
+
+		function moveCube(direzione) {
+			if (direzione == "avanti") {
+				cubePlayer.translateZ(1);
+				spotLight.translateZ(1);
+			} else if (direzione == "back") {
+				cubePlayer.translateZ(-1);
+				spotLight.translateZ(-1);
+			} else if (direzione == "left") {
+				cubePlayer.translateX(1);
+				spotLight.translateX(1);
+			} else if (direzione == "right") {
+
+				cubePlayer.translateX(-1);
+				spotLight.translateX(-1);
+			}
+
+		}
+/*
+		function canMoveCube(cubePosition){
+			for (let x = 0; x < 6; x++) {
+				for (let z = 0; z < 6; z++) {
+					if(matrix[x][z]==false)
+					console.log("Movimento non valido");
+					if(matrix[x][z]==true)
+					console.log("Movimento valido");
+
+				}	
+			}
+		}
+*/
 
 
 
-	
+
+
+
 
 
 
