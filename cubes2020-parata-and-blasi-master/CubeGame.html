@@ -3,6 +3,8 @@
 <head>
 	<title>Starting Code for 1st Project 2017</title>
 	<style>
+		@import url('https://fonts.googleapis.com/css?family=Rubik&display=swap');
+
 		body {
 			font-family: Monospace;
 			background-color: #f0f0f0;
@@ -14,6 +16,42 @@
 			width: 100%;
 			height: 100%;
 		}
+
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+		}
+
+		/* Caratteristiche messaggio finale */
+		.modal-content {
+			margin: 15% auto;
+			padding: 20px;
+			width: 80%;
+			background-color: #f0f0f0;
+			opacity: 0.9;
+		}
+
+		#puzzle {
+			text-align: center;
+			color: #00f5ff;
+			font-family: 'Rubik', sans-serif;
+			font-size: 36px;
+			font-weight: 400;
+			line-height: 48px;
+			text-shadow: -1px 0 #a2c3e2, 0 1px #a2c3e2, 1px 0 #a2c3e2, 0 -1px #a2c3e2;
+		}
+		#info{
+			padding-right: 10%;
+			padding-top: 10px;
+			text-align: right;
+			font-size: 24px;
+		}
 	</style>
 	<script src="lib/three.min.js"></script>
 	<script src="lib/stats.min.js"></script>
@@ -22,11 +60,16 @@
 </head>
 
 <body>
+	
+
+	<div id="info">Cubi mancanti = <b id="cubiMancanti">Start!</b></div>
 
 	<script>
 		//GENERAL VARIABLE 
 		var scene, camera, renderer, controls, stats;
 		var matrix = [];
+		var counter = 0;
+		var cubiMancanti = 25;
 
 		//CUBE VARIABLE
 		var geometry;
@@ -37,10 +80,11 @@
 		var edge;
 		var line;
 		var cubePlayerPosition;
+		var pivotCubePlayer;
 
 		//CUBE LIGHT
 		var spotLight;
-	
+
 
 
 
@@ -56,7 +100,7 @@
 			var context = canvas.getContext('2d');
 
 			var size = img.width * img.height;
-			console.log(size);
+			//console.log(size);
 			var data = new Float32Array(size);
 
 			context.drawImage(img, 0, 0);
@@ -73,7 +117,6 @@
 				var all = pix[i] + pix[i + 1] + pix[i + 2]; // all is in range 0 - 255*3
 				data[j++] = scale * all / 3;
 			}
-
 			return data;
 		}
 
@@ -84,10 +127,9 @@
 			InizializeCamera(); //Inizializza la camera
 			InitializeCube(); //Inizializza i cubi
 			CreateStats(); //Fa apparire gli stats della scena
-			CreateLight(); //Crea la luce della scena
-
-			CreateMatrix(); //Crea la matrice assegnando false alle caselle vuote 			
+			CreateMatrix(); //Crea la matrice assegnando false alle caselle vuote 	
 			CreateMap(); //Crea la mappa in base alla matrice creata sopra
+			DrawPlayer(); //disegna il player
 
 
 
@@ -98,22 +140,11 @@
 			//Responsive window
 			window.addEventListener("resize", onWindowResize, false);
 
-			function onWindowResize(){
-				camera.aspect = window.innerWidth/window.innerHeight;
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 				renderer.setSize(window.innerWidth, window.innerHeight);
 			}
-			
-
-
-			cubePlayer.position.set(0, 1, 0);
-
-
-
-
-			DrawPlayer();
-			scene.add(cubePlayer);
-
 
 			//Coordinates.drawAllAxes();				//Per mostrare le coordinate nella scena
 
@@ -144,9 +175,6 @@
 		}
 
 		function Render() {
-
-
-
 			renderer.render(scene, camera);
 		}
 
@@ -164,14 +192,36 @@
 		//INIZIALIZZA LE CARATTERISTICHE DELLA CAMERA
 		function InizializeCamera() {
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-			camera.position.set(0, 6, -10);
+			camera.position.set(0, 6, -4);
 			camera.lookAt(new THREE.Vector3(0, 0, 0));
 		}
 
+		//finalizza la creazione del player e lo aggiunge ad un suo pivot insieme alla luce creata
+		function DrawPlayer() {
+			cubePlayer.reciveShadow = true;
+			cubePlayer.castShadow = true;
+			cubePlayer.add(line);
+			pivotCubePlayer = new THREE.Object3D();
+			pivotCubePlayer.add(cubePlayer);
+			pivotCubePlayer.position.set(0, 1, 0);
+			CreateLight();
+			pivotCubePlayer.add(spotLight);
+			spotLight.position.set(0, 1, 0);
+			spotLight.position.y = 1;
+			scene.add(pivotCubePlayer);
+
+		}
+		//finalizza le caratteristiche del cubeMap
+		function DrawMapCubes() {
+
+			cubeMap.reciveShadow = true;
+			cubeMap.castShadow = true;
+			cubeMap.add(line);
+
+		}
 		//INIZIALIZZA LE CARATTERISTICHE DEI CUBI
 		function InitializeCube() {
 			geometry = new THREE.BoxGeometry(1, 1, 1);
-
 			mapMaterial = new THREE.MeshLambertMaterial({
 				color: 0xf5ad4b
 			});
@@ -189,29 +239,8 @@
 					color: 0x000000
 				})
 			);
-
-
 			DrawMapCubes();
-
-
-
-
 		}
-
-		function DrawPlayer() {
-
-			cubePlayer.reciveShadow = true;
-			cubePlayer.castShadow = true;
-			cubePlayer.add(line);
-		}
-
-		function DrawMapCubes() {
-			cubeMap.reciveShadow = true;
-			cubeMap.castShadow = true;
-			cubeMap.add(line);
-		}
-
-
 
 
 		//CREA GLI STATS DELLA SCENA
@@ -224,31 +253,7 @@
 
 		//CREA LA LUCE
 		function CreateLight() {
-			var pivot = new THREE.Object3D();
-			scene.add(pivot);
-			
-
-			spotLight = new THREE.PointLight( 0xffffff, 1, 5 );
-
-			
-
-			cubePlayerPosition = new THREE.Vector3();
-			cubePlayer.localToWorld(cubePlayerPosition);
-			pivot.worldToLocal(cubePlayerPosition);
-			cubePlayerPosition.sub(pivot.position);
-			cubePlayerPosition.add(new THREE.Vector3(-0.7,2,-0.7));
-			pivot.position.add(cubePlayerPosition);
-
-			
-			pivot.add(spotLight);
-			
-			console.log(pivot.position);
-
-			//spotLight.position.set(0, 3, 1);
-			
-
-			scene.add(pivot);
-
+			spotLight = new THREE.PointLight(0xffffff, 1, 5);
 		}
 
 		//CREA LA MATRICE
@@ -274,7 +279,7 @@
 			matrix[4][3] = false;
 			matrix[5][3] = false;
 			matrix[5][5] = false;
-			
+
 		}
 
 		//CREA LA MAPPA IN BASE ALLA MATRICE 
@@ -283,74 +288,157 @@
 				for (var x = 0; x < 6; x++) {
 					if (matrix[z][x] == true) {
 						InitializeCube();
-
 						scene.add(cubeMap);
 						cubeMap.position.set(x, 0, z);
 					}
-
 				}
 			}
 		}
-
+//interpreta i comandi ricevuti in input dalla tastiera
 		function onDocumentKeyDown(event) {
 			var keyCode = event.code;
 			if (keyCode == 'KeyW') {
-				moveCube("avanti")
+				cubeAnimation(0);
 			} else if (keyCode == 'KeyS') {
-				moveCube("back")
+				cubeAnimation(2);
 			} else if (keyCode == 'KeyA') {
-				moveCube("left")
+				cubeAnimation(1);
 			} else if (keyCode == 'KeyD') {
-				moveCube("right")
+				cubeAnimation(3);
 			} else if (keyCode == 'Space') {
-				cubePlayer.position.set(2, 1, 2);
+				window.location.reload(true);
 			}
 			Render();
+		}
+
+
+
+		//effettua l'animazione del cubo nello spostamento
+		function cubeAnimation(dir) {
+			var t = 0;
+			switch (dir) {
+				case 0: //avanti
+					var intervallo = setInterval(function () {
+						if (t > 4) {
+							changeMaterial();
+							clearInterval(intervallo);
+						} else {
+							cubePlayer.rotation.x = (90 * Math.PI / 180) / 4 * t;
+							pivotCubePlayer.translateZ(0.2);
+						}
+						t++;
+					}, 100);
+
+					break;
+				case 1: //sinistra
+					var intervallo = setInterval(function () {
+						if (t > 4) {
+							changeMaterial();
+							clearInterval(intervallo);
+						} else {
+							cubePlayer.rotation.z = (-90 * Math.PI / 180) / 4 * t;
+							pivotCubePlayer.translateX(0.2);
+						}
+						t++;
+					}, 100);
+					break;
+
+				case 2: //indietro
+					var intervallo = setInterval(function () {
+						if (t > 4) {
+							changeMaterial();
+							clearInterval(intervallo);
+						} else {
+							cubePlayer.rotation.x = (-90 * Math.PI / 180) / 4 * t;
+							pivotCubePlayer.translateZ(-0.2);
+						}
+						t++;
+					}, 100);
+					break;
+
+				case 3: //destra
+
+					var intervallo = setInterval(function () {
+						if (t > 4) {
+							changeMaterial();
+							clearInterval(intervallo);
+						} else {
+							cubePlayer.rotation.z = (90 * Math.PI / 180) / 4 * t;
+							pivotCubePlayer.translateX(-0.2);
+						}
+						t++;
+					}, 100);
+					break;
 			}
 
-		function moveCube(direzione) {
-			if (direzione == "avanti") {
-				cubePlayer.translateZ(1);
-				spotLight.translateZ(1);
-			} else if (direzione == "back") {
-				cubePlayer.translateZ(-1);
-				spotLight.translateZ(-1);
-			} else if (direzione == "left") {
-				cubePlayer.translateX(1);
-				spotLight.translateX(1);
-			} else if (direzione == "right") {
 
-				cubePlayer.translateX(-1);
-				spotLight.translateX(-1);
+		}
+
+
+
+		//cambia il materiale del cubo su cui si transita
+		function changeMaterial() {
+
+			for (var i = 0; i < scene.children.length; i++) {
+
+				if (
+					Math.abs(scene.children[i].position.x - pivotCubePlayer.position.x) < 0.1 //controllo asse x
+					&&
+					Math.abs(scene.children[i].position.z - pivotCubePlayer.position.z) < 0.1 //controllo asse y
+					&&
+					((scene.children[i].position.y == 0) //controllo asse z
+						&&
+						(scene.children[i].material.color.r != 0 && scene.children[i].material.color.g != 0 && scene.children[
+							i].material.color.b != 0)) //controllo materiale cubo
+				) {
+					scene.children[i].material.color = new THREE.Color(0x0000ff);
+					scene.children[i].material.emissive = new THREE.Color(0x0000ff);
+					cubeMap.material.emissiveIntensity = 0.5;
+					levelCompleted()
+					decrease();
+				}
+			}
+		}
+		//Verifica se il gioco è terminato
+		function levelCompleted() {
+			counter++;
+
+			if (counter == 25) {
+				console.log("Livello completato!");
+
+				// Get the modal
+				var modal = document.getElementById("myModal");
+
+				// Get the button that opens the modal
+				var btn = document.getElementById("myBtn");
+
+				// Get the <span> element that closes the modal
+				var span = document.getElementsByClassName("close")[0];
+
+				modal.style.display = "block";
 			}
 
 		}
-/*
-		function canMoveCube(cubePosition){
-			for (let x = 0; x < 6; x++) {
-				for (let z = 0; z < 6; z++) {
-					if(matrix[x][z]==false)
-					console.log("Movimento non valido");
-					if(matrix[x][z]==true)
-					console.log("Movimento valido");
-
-				}	
-			}
+		//decrementa il contatore ogni volta che viene colorato un mapcube per completare il gioco.
+		function decrease() {
+			cubiMancanti--;
+			document.getElementById('cubiMancanti').innerHTML = cubiMancanti;
 		}
-*/
-
-
-
-
-
-
-
-
 
 
 		Start();
 		Update();
 	</script>
+
+
+	<div id="myModal" class="modal" style="display: none;">
+
+		<!-- Modal content -->
+		<div class="modal-content">
+			<p id="puzzle">Puzzle completato!</p>
+		</div>
+
+	</div>
 </body>
 
 </html>
