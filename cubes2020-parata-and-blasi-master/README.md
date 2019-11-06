@@ -2,7 +2,7 @@
 
   
 
-![Image from Game](preview.png)
+![Image from Game](preview.PNG)
 
   
 
