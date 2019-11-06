@@ -46,7 +46,8 @@
 			line-height: 48px;
 			text-shadow: -1px 0 #a2c3e2, 0 1px #a2c3e2, 1px 0 #a2c3e2, 0 -1px #a2c3e2;
 		}
-		#info{
+
+		#info {
 			padding-right: 10%;
 			padding-top: 10px;
 			text-align: right;
@@ -60,7 +61,7 @@
 </head>
 
 <body>
-	
+
 
 	<div id="info">Cubi mancanti = <b id="cubiMancanti">Start!</b></div>
 
@@ -70,6 +71,13 @@
 		var matrix = [];
 		var counter = 0;
 		var cubiMancanti = 25;
+		var actualZ;
+		var actualX;
+
+
+
+		//HightMap VARIABLE
+		var cubeHightMap;
 
 		//CUBE VARIABLE
 		var geometry;
@@ -85,14 +93,14 @@
 		//CUBE LIGHT
 		var spotLight;
 
-
-
+		//HIGHTMAP
+		var data;
 
 
 		//return array with height data from img, taken from: http://danni-three.blogspot.it/2013/09/threejs-heightmaps.html
 		function getHeightData(img, scale) {
 
-			if (scale == undefined) scale = 1;
+			if (scale == undefined) scale = 0.05;
 
 			var canvas = document.createElement('canvas');
 			canvas.width = img.width;
@@ -100,8 +108,8 @@
 			var context = canvas.getContext('2d');
 
 			var size = img.width * img.height;
-			//console.log(size);
-			var data = new Float32Array(size);
+
+			data = new Float32Array(size);
 
 			context.drawImage(img, 0, 0);
 
@@ -120,17 +128,23 @@
 			return data;
 		}
 
+
+
 		function Start() {
 			scene = new THREE.Scene();
+
+
+			actualZ = 0;
+			actualX = 0;
 
 			InizializeRenderer(); //Inizializza il renderer
 			InizializeCamera(); //Inizializza la camera
 			InitializeCube(); //Inizializza i cubi
+			InitializeHightmap(); //Inizializza il muro
 			CreateStats(); //Fa apparire gli stats della scena
 			CreateMatrix(); //Crea la matrice assegnando false alle caselle vuote 	
 			CreateMap(); //Crea la mappa in base alla matrice creata sopra
 			DrawPlayer(); //disegna il player
-
 
 
 
@@ -154,16 +168,50 @@
 
 			// terrain
 			var img = new Image();
-
-			// load img source
 			img.src = "textures/heightmap2.png";
 			img.onload = function () {
 
 				//get height data from img
-				var data = getHeightData(img, 0.1);
+				data = getHeightData(img, 0.02);
 
+				createHightMap();
 			}
 
+			function createHightMap() {
+				var h = -2;
+				var group = new THREE.Group();
+
+				for (var i = 0; i < 32; i++) {
+					for (var k = 0; k < 32; k++) {
+						if ((k < 12 || i > 21) || (i < 11 || k > 21)) {
+							InitializeHightmap();
+							cubeHightMap.position.set(i, data[i + k * 32] + h, k);
+							if (cubeHightMap.position.y < -2.5) {
+								cubeHightMap.material.color.setHex(0x000000);
+							} else if (cubeHightMap.position.y > -1.6 && cubeHightMap.position.y < -0.5) {
+								cubeHightMap.material.color.setHex(0x999999);
+							} else if (cubeHightMap.position.y > -0.4 && cubeHightMap.position.y < 1.2) {
+								cubeHightMap.material.color.setHex(0xc9c9c9);
+							} else {
+								console.log("Entrato")
+								cubeHightMap.material.color.setHex(0xffffff);
+							}
+
+							group.add(cubeHightMap);
+						}
+					}
+				}
+				group.position.set(-13, -1, -14);
+				var planeGeometry = new THREE.PlaneBufferGeometry(10, 10);
+				var planeMaterial = new THREE.MeshBasicMaterial({
+					color: 0xffffff
+				});
+				var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+				plane.rotation.x = 90 * Math.PI / 180;
+				plane.position.set(0, 2, 0);
+				group.add(plane);
+				scene.add(group);
+			}
 
 		}
 
@@ -184,7 +232,7 @@
 				antialias: true
 			});
 			renderer.setSize(window.innerWidth, window.innerHeight);
-			renderer.setClearColor(0xf0f0f0);
+			renderer.setClearColor(0x000000);
 			document.body.appendChild(renderer.domElement);
 
 		}
@@ -192,9 +240,10 @@
 		//INIZIALIZZA LE CARATTERISTICHE DELLA CAMERA
 		function InizializeCamera() {
 			camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-			camera.position.set(0, 6, -4);
-			camera.lookAt(new THREE.Vector3(0, 0, 0));
+			camera.position.set(0, 6, -3);
+			//camera.lookAt(new THREE.Vector3(0, 0, 0));
 		}
+
 
 		//finalizza la creazione del player e lo aggiunge ad un suo pivot insieme alla luce creata
 		function DrawPlayer() {
@@ -207,26 +256,28 @@
 			CreateLight();
 			pivotCubePlayer.add(spotLight);
 			spotLight.position.set(0, 1, 0);
-			spotLight.position.y = 1;
 			scene.add(pivotCubePlayer);
 
 		}
 		//finalizza le caratteristiche del cubeMap
 		function DrawMapCubes() {
-
 			cubeMap.reciveShadow = true;
 			cubeMap.castShadow = true;
 			cubeMap.add(line);
 
 		}
+
 		//INIZIALIZZA LE CARATTERISTICHE DEI CUBI
 		function InitializeCube() {
 			geometry = new THREE.BoxGeometry(1, 1, 1);
 			mapMaterial = new THREE.MeshLambertMaterial({
 				color: 0xf5ad4b
 			});
+
 			playerMaterial = new THREE.MeshLambertMaterial({
-				color: 0xff0000
+				color: 0xff0000,
+				transparent: true,
+				opacity: 0.9
 			});
 
 			cubeMap = new THREE.Mesh(geometry, mapMaterial);
@@ -242,6 +293,30 @@
 			DrawMapCubes();
 		}
 
+		function DrawHightmapCube() {
+			cubeHightMap.reciveShadow = true;
+			cubeHightMap.castShadow = true;
+
+			edges = new THREE.EdgesGeometry(geometry);
+			line = new THREE.LineSegments(
+				edges,
+				new THREE.LineBasicMaterial({
+					color: 0x000000
+				})
+			);
+			cubeHightMap.add(line);
+
+		}
+
+		function InitializeHightmap() {
+			wallMaterial = new THREE.MeshBasicMaterial({
+				color: 0x00ff00
+			});
+			cubeHightMap = new THREE.Mesh(geometry, wallMaterial);
+			DrawHightmapCube();
+
+
+		}
 
 		//CREA GLI STATS DELLA SCENA
 		function CreateStats() {
@@ -253,7 +328,7 @@
 
 		//CREA LA LUCE
 		function CreateLight() {
-			spotLight = new THREE.PointLight(0xffffff, 1, 5);
+			spotLight = new THREE.PointLight(0xffffff, 1, 2.5);
 		}
 
 		//CREA LA MATRICE
@@ -282,28 +357,31 @@
 
 		}
 
+
 		//CREA LA MAPPA IN BASE ALLA MATRICE 
 		function CreateMap() {
+
 			for (var z = 0; z < 6; z++) {
 				for (var x = 0; x < 6; x++) {
 					if (matrix[z][x] == true) {
 						InitializeCube();
-						scene.add(cubeMap);
 						cubeMap.position.set(x, 0, z);
+						scene.add(cubeMap);
 					}
 				}
 			}
+
 		}
-//interpreta i comandi ricevuti in input dalla tastiera
+		//interpreta i comandi ricevuti in input dalla tastiera
 		function onDocumentKeyDown(event) {
 			var keyCode = event.code;
-			if (keyCode == 'KeyW') {
+			if (keyCode == 'KeyW' && matrix[actualZ + 1][actualX] == true) {
 				cubeAnimation(0);
-			} else if (keyCode == 'KeyS') {
+			} else if (keyCode == 'KeyS' && matrix[actualZ - 1][actualX] == true) {
 				cubeAnimation(2);
-			} else if (keyCode == 'KeyA') {
+			} else if (keyCode == 'KeyA' && matrix[actualZ][actualX + 1] == true) {
 				cubeAnimation(1);
-			} else if (keyCode == 'KeyD') {
+			} else if (keyCode == 'KeyD' && matrix[actualZ][actualX - 1] == true) {
 				cubeAnimation(3);
 			} else if (keyCode == 'Space') {
 				window.location.reload(true);
@@ -316,65 +394,72 @@
 		//effettua l'animazione del cubo nello spostamento
 		function cubeAnimation(dir) {
 			var t = 0;
+
 			switch (dir) {
 				case 0: //avanti
+					actualZ += 1;
 					var intervallo = setInterval(function () {
 						if (t > 4) {
 							changeMaterial();
 							clearInterval(intervallo);
 						} else {
+
 							cubePlayer.rotation.x = (90 * Math.PI / 180) / 4 * t;
 							pivotCubePlayer.translateZ(0.2);
 						}
 						t++;
-					}, 100);
+					}, 70);
 
 					break;
+
 				case 1: //sinistra
+					actualX += 1;
 					var intervallo = setInterval(function () {
 						if (t > 4) {
 							changeMaterial();
 							clearInterval(intervallo);
 						} else {
+
 							cubePlayer.rotation.z = (-90 * Math.PI / 180) / 4 * t;
 							pivotCubePlayer.translateX(0.2);
 						}
 						t++;
-					}, 100);
+					}, 70);
 					break;
 
 				case 2: //indietro
+					actualZ -= 1;
 					var intervallo = setInterval(function () {
 						if (t > 4) {
 							changeMaterial();
 							clearInterval(intervallo);
 						} else {
+
 							cubePlayer.rotation.x = (-90 * Math.PI / 180) / 4 * t;
 							pivotCubePlayer.translateZ(-0.2);
 						}
 						t++;
-					}, 100);
+					}, 70);
 					break;
 
 				case 3: //destra
-
+					actualX -= 1;
 					var intervallo = setInterval(function () {
 						if (t > 4) {
 							changeMaterial();
 							clearInterval(intervallo);
 						} else {
+
 							cubePlayer.rotation.z = (90 * Math.PI / 180) / 4 * t;
 							pivotCubePlayer.translateX(-0.2);
 						}
 						t++;
-					}, 100);
+					}, 70);
 					break;
 			}
 
 
 		}
-
-
 
 		//cambia il materiale del cubo su cui si transita
 		function changeMaterial() {
@@ -393,7 +478,7 @@
 				) {
 					scene.children[i].material.color = new THREE.Color(0x0000ff);
 					scene.children[i].material.emissive = new THREE.Color(0x0000ff);
-					cubeMap.material.emissiveIntensity = 0.5;
+					scene.children[i].emissiveIntensity = 0.5;
 					levelCompleted()
 					decrease();
 				}
@@ -404,7 +489,7 @@
 			counter++;
 
 			if (counter == 25) {
-				console.log("Livello completato!");
+
 
 				// Get the modal
 				var modal = document.getElementById("myModal");
