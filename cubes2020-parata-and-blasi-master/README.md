@@ -2,7 +2,7 @@
 
   
 
-![Image from Game](https://jordanweagly.files.wordpress.com/2012/02/figure_4.png)
+![Image from Game](preview.png)
 
   
 
@@ -34,6 +34,8 @@
 -CubePlayer: che rappresenta il giocatore
 
 -Cubesmap: cubi con una chromatura iniziale che cambieranno di materiale al passaggio del **CubePlayer**
+
+-HightMap: cubi generati come decorazione intorno all'area di gioco.
 
   
 
@@ -81,7 +83,6 @@ Implementazione della hightmap con relativa assegnazione dei colori in base all'
 Implementazione muri invisibili e revisione parziale del codice
 
   
-  
 
 **Implementazioni future**
 
@@ -90,14 +91,15 @@ Implementazione muri invisibili e revisione parziale del codice
 -Aggiunta effetti speciali durante l'animazione del cubo
 
 -Aggiunta colorazioni mappa e player personalizzabili.
-
-  
+ 
 
 **Tecnologie utilizzate**
 
 -GitHub
 
 -VisualStudio Code
+
+-HTML
 
 -Threejs
 
